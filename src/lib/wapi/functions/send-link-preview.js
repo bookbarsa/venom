@@ -54,11 +54,68 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 all copyright reservation for S2 Click, Inc
 */
 export async function sendLinkPreview(chatId, url, text) {
-    text = text || '';
-    var chatSend = WAPI.getChat(chatId);
-    if (chatSend === undefined) {
-        return false;
-    }
-    const linkPreview = await Store.WapQuery.queryLinkPreview(url);
-    return (await chatSend.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview}))=='success'
+  text = text || '';
+
+  var chatSend = WAPI.getChat(chatId);
+
+  if (chatSend === undefined) {
+    return false;
+  }
+
+  const linkPreview = await Store.WapQuery.queryLinkPreview(url);
+  return await chatSend.sendMessage(
+    text.includes(url) ? text : `${url}\n${text}`,
+    { linkPreview }
+  );
+
+  // try {
+  //     window.getContact = (id) => {
+  //       return Store.WapQuery.queryExist(id);
+  //     };
+  //     window.getContact(id).then((contact) => {
+  //       if (contact.status === 404) {
+  //         done(true);
+  //       } else {
+  //         Store.Chat.find(contact.jid)
+  //           .then((chat) => {
+  //             chat.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview});
+  //             return true;
+  //           })
+  //           .catch((reject) => {
+  //             if (WAPI.sendMessage(chatId, text.includes(url) ? text : `${url}\n${text}`, {linkPreview})) {
+  //               done(true);
+  //               return true;
+  //             } else {
+  //               done(false);
+  //               return false;
+  //             }
+  //           });
+  //       }
+  //     });
+  // } catch (e) {
+  //     if (window.Store.Chat.length === 0) return false;
+
+  //     firstChat = Store.Chat.models[0];
+  //     var originalID = firstChat.id;
+  //     firstChat.id =
+  //       typeof originalID === 'string'
+  //         ? id
+  //         : new window.Store.UserConstructor(id, {
+  //             intentionallyUsePrivateConstructor: true,
+  //           });
+  //     if (done !== undefined) {
+  //         firstChat.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview}).then(function () {
+  //             firstChat.id = originalID;
+  //             done(true);
+  //         });
+  //       return true;
+  //     } else {
+  //       firstChat.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview});
+  //       firstChat.id = originalID;
+  //       return true;
+  //     }
+  // }
+  // if (done !== undefined) done(false);
+  // return false;
+  //return (await chatSend.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview}))=='success'
 }

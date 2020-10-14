@@ -54,7 +54,6 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 all copyright reservation for S2 Click, Inc
 */
 import { readFileSync, writeFileSync, mkdir } from 'fs';
-import latestVersion from 'latest-version';
 import { Page } from 'puppeteer';
 import { timer } from 'rxjs';
 import { takeUntil, switchMap } from 'rxjs/operators';
@@ -63,16 +62,22 @@ import { CreateConfig, defaultOptions } from '../config/create-config';
 import { upToDate } from '../utils/semver';
 import { isAuthenticated, isInsideChat, retrieveQR } from './auth';
 import { initWhatsapp, injectApi } from './browser';
+
+import latestVersion from 'latest-version';
 import chalk = require('chalk');
 import boxen = require('boxen');
 import Spinnies = require('spinnies');
 import path = require('path');
 import Counter = require('../lib/counter/Counter.js');
+
 const { version } = require('../../package.json');
 
+const treeKill = require('tree-kill');
+
 // Global
-let updatesChecked = false;
-const counter = new Counter();
+let updatesChecked = true;
+
+//const counter = new Counter();
 
 /**
  * Should be called to initialize whatsapp client
@@ -80,7 +85,7 @@ const counter = new Counter();
 export async function create(
   session = 'session',
   catchQR?: (qrCode: string, asciiQR: string) => void,
-  statusFind?: (statusGet: string) => void,
+  statusFind?: (statusGet: any) => void,
   options?: CreateConfig
 ) {
   const spinnies = new Spinnies({
@@ -128,14 +133,20 @@ export async function create(
   if (authenticated) {
     // Wait til inside chat
     if (statusFind) {
-      statusFind('isLogged');
+      statusFind({
+        session: session,
+        status: 'isLogged',
+      });
     }
 
     await isInsideChat(waPage).toPromise();
     spinnies.succeed(`${session}-auth`, { text: 'Authenticated' });
   } else {
     if (statusFind) {
-      statusFind('notLogged');
+      statusFind({
+        session: session,
+        status: 'notLogged',
+      });
     }
     spinnies.update(`${session}-auth`, {
       text: `Authenticate to continue`,
@@ -161,7 +172,13 @@ export async function create(
       });
 
       mergedOptions.autoClose
-        ? grabQRUntilTimeOut(waPage, mergedOptions, session, catchQR)
+        ? grabQRUntilTimeOut(
+            waPage,
+            mergedOptions,
+            session,
+            catchQR,
+            statusFind
+          )
         : grabQRUntilInside(waPage, mergedOptions, session, catchQR);
     }
 
@@ -229,22 +246,31 @@ export async function create(
 }
 
 /**
- * Check the time remaining to autoClose from Counter class
- */
-const countDown = (msTimeOut: number) => counter.getElapsedTime() < msTimeOut;
-
-/**
  * Grab QRcode until timeout
  */
 function grabQRUntilTimeOut(
   waPage: Page,
   options: CreateConfig,
   session: string,
-  catchQR: (qrCode: string, asciiQR: string) => void
+  catchQR: (qrCode: string, asciiQR: string) => void,
+  statusFind: (statusGet: any) => void
 ) {
   const isInside = isInsideChat(waPage);
-  let timeInterval = 1000; //options.refreshQR > 0 && options.refreshQR <= options.autoClose ? options.refreshQR : 1000
+
+  //let timeInterval = 1000; //options.refreshQR > 0 && options.refreshQR <= options.autoClose ? options.refreshQR : 1000
+  let timeInterval =
+    options.refreshQR > 0 && options.refreshQR <= options.autoClose
+      ? options.refreshQR
+      : 3000;
+
+  const counter = new Counter();
   counter.isFirstCall = true;
+
+  /**
+   * Check the time remaining to autoClose from Counter class
+   */
+  const countDown = (msTimeOut: number) => counter.getElapsedTime() < msTimeOut;
+
   timer(0, timeInterval)
     .pipe(
       takeUntil(isInside),
@@ -252,8 +278,21 @@ function grabQRUntilTimeOut(
     )
     .subscribe(async ({ data, asciiQR }) => {
       counter.counterInit();
+
       // console.log(waPage.browser().process);
-      countDown(options.autoClose) ? null : await waPage.close(); //Close Imediatly
+
+      //countDown(options.autoClose) ? null : await waPage.close(); //Close Imediatly
+      const stayOnPage = countDown(options.autoClose);
+
+      if (!stayOnPage) {
+        if (waPage.browser) {
+          await kill(waPage);
+        }
+        statusFind({
+          session: session,
+          status: 'closed',
+        });
+      }
 
       let timeOut = Math.round(
         (options.autoClose - counter.getElapsedTime()) / 1000
@@ -270,7 +309,7 @@ function grabQRUntilTimeOut(
             '                ' +
             `(Time remaining for auto close ${timeOut} sec.)`
         );
-        console.log(asciiQR);
+        //console.log(asciiQR);
       }
     });
 }
@@ -334,3 +373,13 @@ function logUpdateAvailable(current: string, latest: string) {
     )}\n`
   );
 }
+
+const kill = async (p) => {
+  if (p) {
+    const browser = await p.browser();
+    const pid = browser.process() ? browser?.process().pid : null;
+    if (!p.isClosed()) await p.close();
+    if (browser) await browser.close();
+    if (pid) treeKill(pid, 'SIGKILL');
+  }
+};
