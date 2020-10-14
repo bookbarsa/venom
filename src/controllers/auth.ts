@@ -51,7 +51,7 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-all copyright reservation for S2 Click, Inc
+
 */
 import * as path from 'path';
 import * as puppeteer from 'puppeteer';
@@ -59,6 +59,7 @@ import * as qrcode from 'qrcode-terminal';
 import { from, merge } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { existsSync, readFileSync } from 'fs';
+import { CreateConfig } from '../config/create-config';
 
 /**
  * Validates if client is authenticated
@@ -98,24 +99,23 @@ export const isInsideChat = (waPage: puppeteer.Page) => {
         }
       )
       .then(() => true)
+      .catch(() => false)
   );
 };
-
 export async function retrieveQR(page: puppeteer.Page) {
   const { code, data } = await decodeQR(page);
+  if (data === null || code === null) {
+    return false;
+  }
   const asciiQR = await asciiQr(code);
   return { code, data, asciiQR };
 }
 
-async function asciiQr(code: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    qrcode.generate(
-      code,
-      { small: true },
-      (qrcode: string | PromiseLike<string>) => {
-        resolve(qrcode);
-      }
-    );
+export async function asciiQr(code: string): Promise<string> {
+  return new Promise((resolve) => {
+    qrcode.generate(code, { small: true }, (qrcode) => {
+      resolve(qrcode);
+    });
   });
 }
 
@@ -123,42 +123,98 @@ async function decodeQR(
   page: puppeteer.Page
 ): Promise<{ code: string; data: string }> {
   await page.waitForSelector('canvas', { timeout: 0 });
+
   await page.addScriptTag({
     path: require.resolve(path.join(__dirname, '../lib/jsQR', 'jsQR.js')),
   });
 
   return await page.evaluate(() => {
-    const canvas = document.querySelector('canvas');
-    const context = canvas.getContext('2d');
-
-    // @ts-ignore
-    const code = jsQR(
-      context.getImageData(0, 0, canvas.width, canvas.height).data,
-      canvas.width,
-      canvas.height
-    );
-
-    return { code: code.data, data: canvas.toDataURL() };
+    const canvas = document.querySelector('canvas') || null;
+    if (canvas !== null) {
+      const context = canvas.getContext('2d') || null;
+      if (context !== null) {
+        // @ts-ignore
+        const code = jsQR(
+          context.getImageData(0, 0, canvas.width, canvas.height).data,
+          canvas.width,
+          canvas.height
+        );
+        return { code: code.data, data: canvas.toDataURL() };
+      }
+    } else {
+      return { code: null, data: null };
+    }
   });
 }
 
-export async function auth_InjectToken(page: puppeteer.Page, session: string) {
-  const pathToken: string = path.join(
-    path.resolve(process.cwd(), 'tokens'),
-    `${session}.data.json`
-  );
+export function SessionTokenCkeck(token: object) {
+  if (
+    token &&
+    token['WABrowserId'] &&
+    token['WASecretBundle'] &&
+    token['WAToken1'] &&
+    token['WAToken2']
+  ) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
+export async function auth_InjectToken(
+  page: puppeteer.Page,
+  session: string,
+  options: CreateConfig,
+  token: object
+) {
   let jsonToken: any;
-
-  if (existsSync(pathToken)) {
-    jsonToken = JSON.parse(readFileSync(pathToken).toString());
-
-    if (!jsonToken) return;
+  if (typeof token === 'object') {
+    jsonToken = token;
     return await page.evaluateOnNewDocument((session) => {
       localStorage.clear();
-      Object.keys(session).forEach((key) =>
-        localStorage.setItem(key, session[key])
-      );
+      Object.keys(session).forEach((key) => {
+        localStorage.setItem(key, session[key]);
+      });
     }, jsonToken);
+  } else {
+    //Auth with token ->start<-
+    const pathToken: string = path.join(
+      path.resolve(
+        process.cwd() + options.mkdirFolderToken,
+        options.folderNameToken
+      ),
+      `${session}.data.json`
+    );
+
+    if (existsSync(pathToken)) {
+      jsonToken = JSON.parse(readFileSync(pathToken).toString());
+      if (!jsonToken) {
+        return false;
+      } else {
+        return await page.evaluateOnNewDocument((session) => {
+          localStorage.clear();
+          Object.keys(session).forEach((key) => {
+            localStorage.setItem(key, session[key]);
+          });
+        }, jsonToken);
+      }
+    }
   }
+  //End Auth with token
+
+  //return await page.evaluateOnNewDocument(() => {
+  // localStorage.setItem('WABrowserId', '"5AXJMPZneACe3iMkbH40+w=="');
+  // localStorage.setItem(
+  //   'WASecretBundle',
+  //   '{"key":"iBZb0m3w6dMfpU9UwF9Tr6/ckNV1NxDqnuZA7De/KMM=","encKey":"KjvvH/np261TSPjoFCsaRitodt96TT7qecBK797Cc7c=","macKey":"iBZb0m3w6dMfpU9UwF9Tr6/ckNV1NxDqnuZA7De/KMM="}'
+  // );
+  // localStorage.setItem(
+  //   'WAToken1',
+  //   '"8qUJJ+jGYn5tgVnMk/wnOeTX2gZUzYED/R2nQHuz8Ek="'
+  // );
+  // localStorage.setItem(
+  //   'WAToken2',
+  //   '"1@9YlRlvFq4fFgrLe7DtvgHPC8TqTmFdDsUW3m/+uyyCSaUkzQbvJeIQ5RD0niIxWHGcN3/aiQ0J5PIg=="'
+  // );
+  //  });
 }

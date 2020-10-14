@@ -51,71 +51,59 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-all copyright reservation for S2 Click, Inc
+
 */
 export async function sendLinkPreview(chatId, url, text) {
-  text = text || '';
-
-  var chatSend = WAPI.getChat(chatId);
-
-  if (chatSend === undefined) {
-    return false;
+  text = text || null;
+  const _Path = {
+    Protocol: '^(https?:\\/\\/)?',
+    Domain: '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|',
+    IP: '((\\d{1,3}\\.){3}\\d{1,3}))',
+    Port: '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*',
+    Query: '(\\?[;&a-z\\d%_.~+=-]*)?',
+    End: '(\\#[-a-z\\d_]*)?$',
+    Reg: () => {
+      return new RegExp(
+        _Path.Protocol +
+          _Path.Domain +
+          _Path.IP +
+          _Path.Port +
+          _Path.Query +
+          _Path.End,
+        'i'
+      );
+    },
+  };
+  if (!_Path.Reg().test(url)) {
+    var text =
+      'Use a valid HTTP protocol. Example: https://www.youtube.com/watch?v=V1bFr2SWP1';
+    return WAPI.scope(chatId, true, null, text);
   }
-
-  const linkPreview = await Store.WapQuery.queryLinkPreview(url);
-  return await chatSend.sendMessage(
-    text.includes(url) ? text : `${url}\n${text}`,
-    { linkPreview }
-  );
-
-  // try {
-  //     window.getContact = (id) => {
-  //       return Store.WapQuery.queryExist(id);
-  //     };
-  //     window.getContact(id).then((contact) => {
-  //       if (contact.status === 404) {
-  //         done(true);
-  //       } else {
-  //         Store.Chat.find(contact.jid)
-  //           .then((chat) => {
-  //             chat.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview});
-  //             return true;
-  //           })
-  //           .catch((reject) => {
-  //             if (WAPI.sendMessage(chatId, text.includes(url) ? text : `${url}\n${text}`, {linkPreview})) {
-  //               done(true);
-  //               return true;
-  //             } else {
-  //               done(false);
-  //               return false;
-  //             }
-  //           });
-  //       }
-  //     });
-  // } catch (e) {
-  //     if (window.Store.Chat.length === 0) return false;
-
-  //     firstChat = Store.Chat.models[0];
-  //     var originalID = firstChat.id;
-  //     firstChat.id =
-  //       typeof originalID === 'string'
-  //         ? id
-  //         : new window.Store.UserConstructor(id, {
-  //             intentionallyUsePrivateConstructor: true,
-  //           });
-  //     if (done !== undefined) {
-  //         firstChat.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview}).then(function () {
-  //             firstChat.id = originalID;
-  //             done(true);
-  //         });
-  //       return true;
-  //     } else {
-  //       firstChat.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview});
-  //       firstChat.id = originalID;
-  //       return true;
-  //     }
-  // }
-  // if (done !== undefined) done(false);
-  // return false;
-  //return (await chatSend.sendMessage(text.includes(url) ? text : `${url}\n${text}`, {linkPreview}))=='success'
+  var chat = await WAPI.sendExist(chatId);
+  if (chat.erro === false || chat.__x_id) {
+    var ListChat = await Store.Chat.get(chatId);
+    const linkPreview = await Store.WapQuery.queryLinkPreview(url);
+    var result = Promise.all(
+      ListChat
+        ? await chat.sendMessage(
+            text.includes(url) ? text : `${url}\n${text}`,
+            { linkPreview }
+          )
+        : ''
+    );
+    result = result._value.join('');
+    var m = { type: 'LinkPreview', url: url, text: text },
+      To = await WAPI.getchatId(chat.id);
+    if (result === 'success' || result === 'OK') {
+      var obj = WAPI.scope(To, false, result, null);
+      Object.assign(obj, m);
+      return obj;
+    } else {
+      var obj = WAPI.scope(To, true, result, null);
+      Object.assign(obj, m);
+      return obj;
+    }
+  } else {
+    return chat;
+  }
 }

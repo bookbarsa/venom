@@ -1,100 +1,124 @@
-﻿## Changelog
+## [2.0.12]
 
-_All notable changes to this project will be documented in this file. Dates are displayed in UTC._
-**1.1.4**
-26 July 2020
+- fix is onAck
+- fix create more than one function: onMessage, onAnyMessage, onStateChange and onAck
+- new option createPathFileToken
+- new option in create browserSessionToken
+- new option catchQR: attempt
+- new function getSessionTokenBrowser
 
-fix bug
+## [2.0.11](https://github.com/orkestral/venom/compare/v2.0.10...v2.0.11) (2020-10-07)
 
-**1.1.2**
-24 July 2020
+## [2.0.10](https://github.com/orkestral/venom/compare/v2.0.9...v2.0.10) (2020-10-06)
 
-fix bug autoclose
+## [2.0.9](https://github.com/orkestral/venom/compare/v2.0.8...v2.0.9) (2020-10-06)
 
-**1.1.1**
-24 July 2020
+### Bug Fixes
 
-New functions
+- change chromium args ([1a18c5d](https://github.com/orkestral/venom/commit/1a18c5dbfaefe25de543db6ee179ffd8a02f20ad))
+- change user agent ([baf9598](https://github.com/orkestral/venom/commit/baf9598e876245c8f51f8d3791727af61eab3979))
+- correct link update ([599c562](https://github.com/orkestral/venom/commit/599c5625be97b07f5857683dea3cbc77f5ea35cc))
+- name chromium ([25c1a3d](https://github.com/orkestral/venom/commit/25c1a3d1aef646ae4a93026e7880274c6b56988e))
 
-**1.0.9**
-30 June 2020
+### Features
 
-remove fix file mime type discovery
+- new option to connect browserWSEndpoint ([2343e1a](https://github.com/orkestral/venom/commit/2343e1a39059dced4a13dc6b41fc4055ac55ddcc))
+- new option to connect with external browser ([2a62bb9](https://github.com/orkestral/venom/commit/2a62bb9d254d6651e5040d84128043d696d6694d))
 
-**1.0.8**
+## [2.0.7 | 2.0.8](https://github.com/orkestral/venom/compare/v2.0.6...v2.0.8) (2020-09-29)
 
-29 June 2020
+- Updating packages
+- Improved message download
+- Message error when try descrypt
 
-fix reply (with mention)
+## [2.0.6](https://github.com/orkestral/venom/compare/v2.0.4...v2.0.6) (2020-09-28)
 
-add function autoClose
+- Fixed return type of create function
+- Fix initialization with autoclose
 
-add function joingroup
+## [2.0.4 | 2.0.5](https://github.com/orkestral/venom/compare/v2.0.3...v2.0.4) (2020-09-22)
 
-add function getgroupinfofrominvitelink
+- Change ascii welcome venom
+- Update user agent
+- Fix is connected
 
-fix file mime type discovery
+## [2.0.2 | 2.0.3](https://github.com/orkestral/venom/compare/a6ac61cd31c759dc75b1bfac3c6ecee645f54ee5...v2.0.3) (2020-09-21)
 
-**1.0.7**
+- add crete config folderNameToken, mkdirFolderToken
+- fix package.json rxjs
+- add option to disable message terminal Welcome Venom
+- fix function to send by group id
+- fix bug sendImageAsStickerGif, sendImageAsSticker
+- return to chatid to object route treatment
 
-20 June 2020
+## 2.0.1 (2020-09-14)
 
-add setProfilePic
+- fix bug initialization
+- add checkNumberStatus, sendContactVcardList
+- correction qrcode in terminal, sendContactVcard, setProfilePic, sendLocation
+- add parameter in Callback Status Session: browserClose || qrReadSuccess \* || qrReadFail
+- remove refreshQR and sendMessageToId
 
-Fix bug getAllNewMessages
+## 1.1.4 (2020-07-26)
 
-**1.0.6**
+- fix bug
 
-19 June 2020
+## 1.1.2 (2020-07-24)
 
-Fix bug not exist folder dist
+- fix bug autoclose
 
-**1.0.5**
+## 1.1.1 (2020-07-24)
 
-19 June 2020
+- New functions
 
-Fix bug useHere
+## 1.0.9 (2020-06-30)
 
-**1.0.4**
+- remove fix file mime type discovery
 
-15 June 2020
+## 1.0.8 (2020-06-29)
 
-Fix bug performace
+- fix reply (with mention)
+- add function autoClose
+- add function joingroup
+- add function getgroupinfofrominvitelink
+- fix file mime type discovery
 
-**1.0.3**
+## 1.0.7 (2020-06-20)
 
-14 June 2020
+- add setProfilePic
+- Fix bug getAllNewMessages
 
-Fix bug performace
+## 1.0.6 (2020-06-19)
 
-**1.0.2**
+- Fix bug not exist folder dist
 
-13 June 2020
+## 1.0.5 (2020-06-19)
 
-Fix bug disabled spinners
+- Fix bug useHere
 
-**1.0.1**
+## 1.0.4 (2020-06-15)
 
-13 June 2020
+- Fix bug performace
 
-Session for Token - for [HelioSilva](https://github.com/orkestral/venom/commits?author=HelioSilva)
+## 1.0.3 (2020-06-14)
 
-Spinners disabled options - for [CosmicSnow](https://github.com/orkestral/venom/commits?author=CosmicSnow)
+- Fix bug performace
 
-**1.0.0**
+## 1.0.2 (2020-06-13)
 
-6 June 2020
+\*Fix bug disabled spinners
 
-    First version
+## 1.0.1 (2020-06-13)
 
-    Init readme
+- Session for Token - for [HelioSilva](https://github.com/orkestral/venom/commits?author=HelioSilva)
+- Spinners disabled options - for [CosmicSnow](https://github.com/orkestral/venom/commits?author=CosmicSnow)
 
-    Do not force rxjs
+## 1.0.0 (2020-06-06)
 
-    Initial commit
-
-    Fix CatchQR erro
-
-    QR catching
-
-    Add Status of Session
+- First version
+- Init readme
+- Do not force rxjs
+- Initial commit
+- Fix CatchQR erro
+- QR catching
+- Add Status of Session

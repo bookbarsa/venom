@@ -1,3 +1,6 @@
+import { constants } from 'buffer';
+import { type } from 'os';
+
 /*
 NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
@@ -51,56 +54,73 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-all copyright reservation for S2 Click, Inc
-*/
-export function sendMessageToID(id, message, done) {
-  try {
-    window.getContact = (id) => {
-      return Store.WapQuery.queryExist(id);
-    };
-    window.getContact(id).then((contact) => {
-      if (contact.status === 404) {
-        done(true);
-      } else {
-        Store.Chat.find(contact.jid)
-          .then((chat) => {
-            chat.sendMessage(message);
-            return true;
-          })
-          .catch((reject) => {
-            if (WAPI.sendMessage(id, message)) {
-              done(true);
-              return true;
-            } else {
-              done(false);
-              return false;
-            }
-          });
-      }
-    });
-  } catch (e) {
-    if (window.Store.Chat.length === 0) return false;
 
-    firstChat = Store.Chat.models[0];
-    var originalID = firstChat.id;
-    firstChat.id =
-      typeof originalID === 'string'
-        ? id
-        : new window.Store.UserConstructor(id, {
-            intentionallyUsePrivateConstructor: true,
-          });
-    if (done !== undefined) {
-      firstChat.sendMessage(message).then(function () {
-        firstChat.id = originalID;
-        done(true);
-      });
-      return true;
-    } else {
-      firstChat.sendMessage(message);
-      firstChat.id = originalID;
-      return true;
-    }
+*/
+export async function sendContactVcardList(chatId, contacts) {
+  if (typeof chatId != 'string') {
+    var text =
+      "incorrect parameter, insert an string. Example: '222222222222@c.us'";
+    return WAPI.scope(chatId, true, null, text);
   }
-  if (done !== undefined) done(false);
-  return false;
+  if (!Array.isArray(contacts)) {
+    var text =
+      "incorrect parameter, insert an array. Example: ['222222222222@c.us', '333333333333@c.us, ... ]";
+    return WAPI.scope(chatId, true, null, text);
+  }
+  if (contacts.length === 1) {
+    var text =
+      "Enter more than one number to send. Example: ['222222222222@c.us', '333333333333@c.us, ... ]";
+    return WAPI.scope(chatId, true, null, text);
+  }
+  var chat = await WAPI.sendExist(chatId);
+  if (chat.erro === false || chat.__x_id) {
+    var ListChat = await Store.Chat.get(chatId),
+      tempMsg = Object.create(
+        Store.Msg.models.filter(
+          (msg) => msg.__x_isSentByMe && !msg.quotedMsg
+        )[0]
+      ),
+      conta = contacts.map(async (e) => {
+        return await WAPI.sendExist(e);
+      });
+    var ar = await Promise.all(conta);
+    var cont = new Array();
+    for (var key in ar) {
+      cont.push(ar[key].__x_contact);
+    }
+    var vcard = cont.map(async (e) => {
+      return await window.Store.Vcard.vcardFromContactModel(e);
+    });
+    var newId = window.WAPI.getNewMessageId(chatId);
+    var Vcards = await Promise.all(vcard);
+    var extend = {
+      ack: 0,
+      from: chatId,
+      local: !0,
+      self: 'out',
+      id: newId,
+      t: parseInt(new Date().getTime() / 1000),
+      to: chatId,
+      type: 'multi_vcard',
+      vcardList: Vcards,
+      isNewMsg: !0,
+    };
+    Object.assign(tempMsg, extend);
+    var result = await Promise.all(
+      ListChat ? Store.addAndSendMsgToChat(chat, tempMsg) : ''
+    );
+    var m = { from: contacts, type: 'multi_vcard' },
+      To = await WAPI.getchatId(chat.id);
+    if (result[1] === 'success' || result[1] === 'OK') {
+      var obj = WAPI.scope(To, false, result[1], null);
+      Object.assign(obj, m);
+      return obj;
+    } else {
+      var obj = WAPI.scope(To, true, result, null);
+      Object.assign(obj, m);
+      return obj;
+    }
+  } else {
+    return chat;
+  }
 }

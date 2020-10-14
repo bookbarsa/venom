@@ -51,13 +51,18 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-all copyright reservation for S2 Click, Inc
 */
 import { Page } from 'puppeteer';
 import { UILayer } from './ui.layer';
 
 declare module WAPI {
   const deleteConversation: (chatId: string) => boolean;
+  const archiveChat: (chatId: string, option: boolean) => boolean;
+  const pinChat: (
+    chatId: string,
+    option: boolean,
+    nonExistent?: boolean
+  ) => Promise<object>;
   const clearChat: (chatId: string) => void;
   const deleteMessages: (
     contactId: string,
@@ -120,6 +125,42 @@ export class ControlsLayer extends UILayer {
       (chatId) => WAPI.deleteConversation(chatId),
       chatId
     );
+  }
+
+  /**
+   * Archive and unarchive chat messages with true or false
+   * @param chatId {string} id '000000000000@c.us'
+   * @param option {boolean} true or false
+   * @returns boolean
+   */
+  public async archiveChat(chatId: string, option: boolean) {
+    return this.page.evaluate(
+      ({ chatId, option }) => WAPI.archiveChat(chatId, option),
+      { chatId, option }
+    );
+  }
+
+  /**
+   * Pin and Unpin chat messages with true or false
+   * @param chatId {string} id '000000000000@c.us'
+   * @param option {boolean} true or false
+   * @param nonExistent {boolean} Pin chat, non-existent (optional)
+   * @returns object
+   */
+  public async pinChat(chatId: string, option: boolean, nonExistent?: boolean) {
+    return new Promise(async (resolve, reject) => {
+      var result = await this.page.evaluate(
+        ({ chatId, option, nonExistent }) => {
+          return WAPI.pinChat(chatId, option, nonExistent);
+        },
+        { chatId, option, nonExistent }
+      );
+      if (result['erro'] == true) {
+        reject(result);
+      } else {
+        resolve(result);
+      }
+    });
   }
 
   /**

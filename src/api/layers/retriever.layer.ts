@@ -51,9 +51,10 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-all copyright reservation for S2 Click, Inc
+
 */
 import { Page } from 'puppeteer';
+import { async } from 'rxjs';
 import {
   Chat,
   Contact,
@@ -91,17 +92,26 @@ declare module WAPI {
     includeMe: boolean,
     includeNotifications: boolean
   ) => Message[];
+  const getChatIsOnline: (chatId: string) => any;
   const loadAndGetAllMessagesInChat: (
     chatId: string,
     includeMe: boolean,
     includeNotifications: boolean
   ) => Message[];
-  const getChatIsOnline: (chatId: string) => any;
+  const getSessionTokenBrowser: () => void;
 }
 
 export class RetrieverLayer extends SenderLayer {
   constructor(page: Page) {
     super(page);
+  }
+
+  /**
+   * returns browser session token
+   * @returns obj [token]
+   */
+  public async getSessionTokenBrowser() {
+    return await this.page.evaluate(() => WAPI.getSessionTokenBrowser());
   }
 
   /**

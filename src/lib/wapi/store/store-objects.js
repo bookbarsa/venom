@@ -51,7 +51,7 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-all copyright reservation for S2 Click, Inc
+
 */
 export const storeObjects = [
   {
@@ -83,7 +83,10 @@ export const storeObjects = [
     id: 'GroupInvite',
     conditions: (module) => (module.queryGroupInviteCode ? module : null),
   },
-  { id: 'Wap', conditions: (module) => (module.createGroup ? module : null) },
+  {
+    id: 'Wap',
+    conditions: (module) => (module.createGroup ? module : null),
+  },
   {
     id: 'ServiceWorker',
     conditions: (module) =>
@@ -109,7 +112,12 @@ export const storeObjects = [
   },
   {
     id: 'WapQuery',
-    conditions: (module) => (module.queryExist) ? module : ((module.default && module.default.queryExist) ? module.default : null),
+    conditions: (module) =>
+      module.queryExist
+        ? module
+        : module.default && module.default.queryExist
+        ? module.default
+        : null,
   },
   {
     id: 'CryptoLib',
@@ -144,6 +152,14 @@ export const storeObjects = [
     conditions: (module) => (module.sendSeen ? module.sendSeen : null),
   },
   {
+    id: 'Archive',
+    conditions: (module) => (module.setArchive ? module : null),
+  },
+  {
+    id: 'pinChat',
+    conditions: (module) => (module.setPin ? module : null),
+  },
+  {
     id: 'sendDelete',
     conditions: (module) => (module.sendDelete ? module.sendDelete : null),
   },
@@ -162,11 +178,12 @@ export const storeObjects = [
     conditions: (module) => (module.Catalog ? module.Catalog : null),
   },
   {
-    id: 'bp',
+    id: 'Perfil',
     conditions: (module) =>
-      module.default &&
-      module.default.toString().includes('bp_unknown_version')
-        ? module.default
+      module.__esModule === true &&
+      module.setPushname &&
+      !module.getComposeContents
+        ? module
         : null,
   },
   {
@@ -309,28 +326,34 @@ export const storeObjects = [
     conditions: (module) =>
       module.default && module.default.openChatFromUnread ? module : null,
   },
-  { id: "ReadSeen",
-  conditions: (module) => (module.sendSeen) ? module : null 
+  {
+    id: 'ReadSeen',
+    conditions: (module) => (module.sendSeen ? module : null),
   },
-  { id: "Block", 
-  conditions: (module) => 
-     (
-     module.blockContact && 
-     module.unblockContact
-     ) ? module : null
-    },
-  { id: "BlockList",
-   conditions: (module) => 
-   (module.BlocklistCollection) ? module : null 
+  {
+    id: 'Block',
+    conditions: (module) =>
+      module.blockContact && module.unblockContact ? module : null,
   },
-  { id: "Theme", 
-  conditions: (module) => 
-  (
-    module.getTheme && 
-    module.setTheme
-  ) ? module : null 
+  {
+    id: 'BlockList',
+    conditions: (module) => (module.BlocklistCollection ? module : null),
   },
-  //{ 
- //   id: "Presence", conditions: (module) => ( module.setPresenceAvailable &&  module.setPresenceUnavailable) ? module : null 
+  {
+    id: 'Theme',
+    conditions: (module) =>
+      module.getTheme && module.setTheme ? module : null,
+  },
+  {
+    id: 'Vcard',
+    conditions: (module) => (module.vcardFromContactModel ? module : null),
+  },
+  {
+    id: 'Profile',
+    conditions: (module) =>
+      module.sendSetPicture && module.requestDeletePicture ? module : null,
+  },
+  //{
+  //   id: "Presence", conditions: (module) => ( module.setPresenceAvailable &&  module.setPresenceUnavailable) ? module : null
   //},
 ];

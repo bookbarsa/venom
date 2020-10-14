@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /*
 NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
@@ -51,28 +52,37 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
-all copyright reservation for S2 Click, Inc
 */
+//////server config
 export interface CreateConfig {
+  folderNameToken?: string;
+  mkdirFolderToken?: string;
   headless?: boolean;
   devtools?: boolean;
   useChrome?: boolean;
   debug?: boolean;
+  browserWS?: string;
   browserArgs?: string[];
   logQR?: boolean;
-  refreshQR?: number;
-  autoClose?: number;
   disableSpins?: boolean;
+  disableWelcome?: boolean;
+  updatesLog?: boolean;
+  autoClose?: number;
+  createPathFileToken: boolean;
 }
-
 export const defaultOptions: CreateConfig = {
+  folderNameToken: 'tokens',
+  mkdirFolderToken: '',
   headless: true,
   devtools: false,
   useChrome: true,
   debug: false,
   logQR: true,
+  browserWS: '',
   browserArgs: [''],
-  refreshQR: 30000,
-  autoClose: 60000,
   disableSpins: false,
+  disableWelcome: false,
+  updatesLog: true,
+  autoClose: 60000,
+  createPathFileToken: false,
 };
