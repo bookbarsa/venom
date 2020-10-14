@@ -248,7 +248,10 @@ export async function create(
             text: 'client has desconnected in to mobile',
           });
           if (statusFind) {
-            statusFind('desconnectedMobile');
+            statusFind('desconnectedMobile', {
+              session: Session,
+              status: 'desconnectedMobile',
+            });
           }
           spinnies.add(`removeFile`, { text: '....' });
           var pathTokens: string = path.join(
