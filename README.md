@@ -92,7 +92,8 @@ venom
     },
     ////statusFind
     (statusSession) => {
-      console.log('Status Session: ', statusSession); //return isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled
+      console.log('Status Session: ', statusSession); //return isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled || desconnectedMobile
+      //Create session wss return "serverClose" case server for close
     },
     ////options
     {
@@ -131,7 +132,7 @@ venom
 
 ## Callback Status Session
 
-Gets the return if the session is `isLogged` or `notLogged` or `browserClose` or `qrReadSuccess` or `qrReadFail` or `autocloseCalled`
+Gets the return if the session is `isLogged` or `notLogged` or `browserClose` or `qrReadSuccess` or `qrReadFail` or `autocloseCalled` or `desconnectedMobile` or `Create session wss return "serverClose" case server for close`
 
 ##### `isLogged: When the user is already logged in to the browser`.
 
@@ -145,6 +146,8 @@ Gets the return if the session is `isLogged` or `notLogged` or `browserClose` or
 
 ##### `autocloseCalled: The browser was closed using the autoClose command`.
 
+##### `desconnectedMobile: Client has desconnected in to mobile`.
+
 ```javascript
 const venom = require('venom-bot');
 venom
@@ -153,9 +156,8 @@ venom
     undefined,
     (statusSession) => {
       console.log('Status Session: ', statusSession);
-      //return isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled
-      //
-A criação de sessão no wss retorna "serverClose" se o servidor não estiver funcionando.
+      //return isLogged || notLogged || browserClose || qrReadSuccess || qrReadFail || autocloseCalled || desconnectedMobile
+      //Create session wss return "serverClose" case server for close
     },
     undefined
   )

@@ -69,7 +69,8 @@ import { CreateConfig } from '../config/create-config';
 export const isAuthenticated = (waPage: puppeteer.Page) => {
   return merge(needsToScan(waPage), isInsideChat(waPage))
     .pipe(take(1))
-    .toPromise();
+    .toPromise()
+    .catch(() => {});
 };
 
 export const needsToScan = (waPage: puppeteer.Page) => {

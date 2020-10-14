@@ -52,7 +52,7 @@ MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNMMNMNMMMNMMNNMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMNNNNMMNNNMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 */
-import { readFileSync, writeFileSync, mkdir } from 'fs';
+import { readFileSync, writeFileSync, mkdir, unlinkSync, existsSync } from 'fs';
 import latestVersion from 'latest-version';
 import { Whatsapp } from '../api/whatsapp';
 import { CreateConfig, defaultOptions } from '../config/create-config';
@@ -71,7 +71,7 @@ import Spinnies = require('spinnies');
 import path = require('path');
 import Counter = require('../lib/counter/Counter.js');
 const { version } = require('../../package.json');
-import { scrapeImgReload, scrapeImg } from '../api/helpers';
+import { scrapeImgReload, scrapeImg, scrapeLogin } from '../api/helpers';
 
 const treeKill = require('tree-kill');
 
@@ -96,7 +96,7 @@ export async function create(
   options?: CreateConfig,
   browserSessionToken?: object
 ): Promise<Whatsapp> {
-  var browser_fail: any,
+  var _fail: any,
     browser_check: any,
     closeBrowser: any,
     attempt = 0,
@@ -146,10 +146,10 @@ export async function create(
 
   if (browser === 'connect') {
     spinnies.fail(`${Session}-auth`, {
-      text: `Error when try to connect ${options.browserWS}`,
+      text: `Error when try to connect ${mergedOptions.browserWS}`,
     });
     browser = null;
-    throw `Error when try to connect ${options.browserWS}`;
+    throw `Error when try to connect ${mergedOptions.browserWS}`;
   }
 
   if (browser === 'launch') {
@@ -175,15 +175,15 @@ export async function create(
       });
     }
 
-    if (!options.browserWS) {
+    if (!mergedOptions.browserWS) {
       browser['_process'].once('close', () => {
         browser['isClose'] = true;
       });
     }
 
-    ///disconnect or close
-    browser_fail = setInterval(() => {
-      if (options.browserWS) {
+    ///disconnect || close
+    _fail = setInterval(() => {
+      if (mergedOptions.browserWS) {
         if (browser.isConnected() === false) {
           spinnies.add(`${Session}-auths`, {
             text: '....',
@@ -202,11 +202,11 @@ export async function create(
           browser.close();
           clearTimeout(closeBrowser);
           clearInterval(browser_check);
-          clearInterval(browser_fail);
+          clearInterval(_fail);
         }
       }
 
-      if (browser['isClose'] != undefined && !options.browserWS) {
+      if (browser['isClose'] != undefined && !mergedOptions.browserWS) {
         spinnies.add(`${Session}-auths`, {
           text: '....',
         });
@@ -220,7 +220,7 @@ export async function create(
           });
         }
         clearTimeout(closeBrowser);
-        clearInterval(browser_fail);
+        clearInterval(_fail);
       }
     }, 1000);
 
@@ -237,8 +237,49 @@ export async function create(
 
     if (waPage) {
       spinnies.update(`${Session}-auth`, { text: 'Authenticating...' });
-
       let authenticated = null;
+
+      let clientCheck = setInterval(async () => {
+        ///client disconnect
+        var client = await scrapeLogin(waPage).catch(() => {});
+        if (client === true) {
+          spinnies.add(`${Session}-authS`, { text: '...' });
+          spinnies.fail(`${Session}-authS`, {
+            text: 'client has desconnected in to mobile',
+          });
+          if (statusFind) {
+            statusFind('desconnectedMobile');
+          }
+          spinnies.add(`removeFile`, { text: '....' });
+          var pathTokens: string = path.join(
+            path.resolve(
+              process.cwd() + mergedOptions.mkdirFolderToken,
+              mergedOptions.folderNameToken
+            ),
+            `${Session}.data.json`
+          );
+          if (existsSync(pathTokens)) {
+            try {
+              unlinkSync(pathTokens);
+              spinnies.succeed(`removeFile`, {
+                text: `Removed file: ${pathTokens}`,
+              });
+            } catch (err) {
+              spinnies.fail(`removeFile`, {
+                text: `Not removed file: ${pathTokens}`,
+              });
+            }
+          } else {
+            spinnies.fail(`removeFile`, { text: `Not Files: ${pathTokens}` });
+          }
+          browser.close();
+          browser.disconnect();
+          clearInterval(_fail);
+          clearInterval(browser_check);
+          clearTimeout(closeBrowser);
+          clearInterval(clientCheck);
+        }
+      }, 1000);
 
       //session authenticated
       await isAuthenticated(waPage)
@@ -246,6 +287,8 @@ export async function create(
           authenticated = e;
         })
         .catch(() => {});
+
+      clearInterval(clientCheck);
 
       if (authenticated != null) {
         // If not authenticated, show QR and wait for scan
@@ -289,7 +332,8 @@ export async function create(
               spinnies.fail(`${Session}-auths`, {
                 text: `Session Autoclose Called`,
               });
-              clearInterval(browser_fail);
+
+              clearInterval(_fail);
               clearInterval(browser_check);
               clearTimeout(closeBrowser);
             }, mergedOptions.autoClose);
@@ -317,7 +361,7 @@ export async function create(
                 });
               }
               clearTimeout(closeBrowser);
-              clearInterval(browser_fail);
+              clearInterval(_fail);
               clearInterval(browser_check);
             } else {
               switch (tipo_qr) {
@@ -396,11 +440,8 @@ export async function create(
 
         clearInterval(browser_check);
         clearTimeout(closeBrowser);
-
         spinnies.add(`${Session}-inject`, { text: 'Injecting Sibionte...' });
-
         waPage = await injectApi(waPage);
-
         spinnies.succeed(`${Session}-inject`, {
           text: 'Starting With Success!',
         });
@@ -408,7 +449,7 @@ export async function create(
         // Saving Token
         spinnies.add(`${Session}-inject`, { text: 'Saving Token...' });
 
-        if (true || (browserToken && !options.createPathFileToken)) {
+        if (true || (browserToken && !mergedOptions.createPathFileToken)) {
           const localStorage = JSON.parse(
             await waPage.evaluate(() => {
               return JSON.stringify(window.localStorage);
